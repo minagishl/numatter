@@ -344,7 +344,7 @@ export function ProfileSettingsCard({ onSaved }: ProfileSettingsCardProps) {
 									setHandle(sanitizeUserHandleDraft(event.target.value));
 								}}
 								maxLength={MAX_HANDLE_LENGTH}
-								className="w-full border-0 bg-transparent p-0 pl-3 text-base text-[var(--text-main)] outline-none"
+								className="w-full border-0 bg-transparent p-0 pl-5 text-base text-[var(--text-main)] outline-none"
 							/>
 						</div>
 						<span className="mt-1 block text-right text-xs text-[var(--text-subtle)]">

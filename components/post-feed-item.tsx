@@ -394,7 +394,7 @@ export function PostFeedItem({
 					) : null}
 
 					{post.content ? (
-						<p className="mt-2 whitespace-pre-wrap text-[15px] leading-6 text-[var(--text-main)]">
+						<p className="mt-2 whitespace-pre-wrap text-[15px] leading-6 text-[var(--text-main)] break-all">
 							{renderPostContent(post.content)}
 						</p>
 					) : null}
