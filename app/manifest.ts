@@ -2,13 +2,13 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
 	return {
-		name: "NextTokuzouKit PWA",
-		short_name: "TokuzouKit!",
-		description: "NextJSを使用して構築されたフルスタック実装キット",
+		name: "Numatter",
+		short_name: "Numatter",
+		description: "Twitter-inspired social timeline built with Next.js",
 		start_url: "/",
 		display: "standalone",
-		background_color: "#ffffff",
-		theme_color: "#000000",
+		background_color: "#f7f9f9",
+		theme_color: "#1d9bf0",
 		icons: [
 			{
 				sizes: "192x192",

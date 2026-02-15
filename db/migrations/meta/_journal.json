@@ -22,6 +22,27 @@
 			"when": 1769564558352,
 			"tag": "0002_remarkable_plazm",
 			"breakpoints": true
+		},
+		{
+			"idx": 3,
+			"version": "7",
+			"when": 1771142236473,
+			"tag": "0003_long_lester",
+			"breakpoints": true
+		},
+		{
+			"idx": 4,
+			"version": "7",
+			"when": 1771161528575,
+			"tag": "0004_handy_hercules",
+			"breakpoints": true
+		},
+		{
+			"idx": 5,
+			"version": "7",
+			"when": 1771168802599,
+			"tag": "0005_chilly_blue_marvel",
+			"breakpoints": true
 		}
 	]
 }

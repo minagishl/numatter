@@ -1,22 +1,30 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { JetBrains_Mono, Noto_Sans_JP } from "next/font/google";
 
-import { SiteHeader } from "@/components/site-header";
+import { PageTransition } from "@/components/page-transition";
 import "./globals.css";
 
-const geistSans = Geist({
-	variable: "--font-geist-sans",
+const bodySans = Noto_Sans_JP({
+	variable: "--font-ui-sans",
 	subsets: ["latin"],
+	weight: ["400", "500", "700", "800"],
 });
 
-const geistMono = Geist_Mono({
-	variable: "--font-geist-mono",
+const bodyMono = JetBrains_Mono({
+	variable: "--font-ui-mono",
 	subsets: ["latin"],
+	weight: ["400", "600"],
 });
 
 export const metadata: Metadata = {
-	title: "Next Tokuzou Kit",
-	description: "Next.js + Hono + Better Auth demo",
+	title: "Numatter",
+	description: "Real-time social feed inspired by Twitter UX",
+};
+
+export const viewport: Viewport = {
+	width: "device-width",
+	initialScale: 1,
+	viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -27,10 +35,11 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body
-				className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-zinc-50 text-zinc-900 antialiased`}
+				className={`${bodySans.variable} ${bodyMono.variable} min-h-screen bg-[var(--app-bg)] text-[var(--text-main)] antialiased`}
 			>
-				<SiteHeader />
-				<main className="mx-auto w-full max-w-5xl px-6 py-10">{children}</main>
+				<main className="min-h-screen">
+					<PageTransition>{children}</PageTransition>
+				</main>
 			</body>
 		</html>
 	);

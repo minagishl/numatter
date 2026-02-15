@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createAutoUserHandleFromUserId } from "@/lib/user-handle";
 import type { BlobFile, FileId, UploadedFile } from "@/server/objects/file";
 import { setup } from "@/tests/vitest.helper";
 import app from "./auth";
 
-const { mock, createUser, db } = await setup();
+const { createUser } = await setup();
 const { saveBlobFile } = vi.hoisted(() => ({
 	saveBlobFile: vi.fn(),
 }));
@@ -42,7 +43,7 @@ describe("/routes/auth", () => {
 			await createUser();
 			const fakeSavedFile: UploadedFile<BlobFile> = {
 				id: "file_123" as FileId,
-				bucket: "techjam2026winter",
+				bucket: "vantan-bbs-twitter-clone",
 				contentType: "text/plain",
 				key: "secure-messages/file_123",
 				kind: "BlobFile",
@@ -117,6 +118,34 @@ describe("/routes/auth", () => {
 				}
 			`);
 			expect(response.status).toBe(200);
+		});
+	});
+
+	describe("POST /sign-up/email", () => {
+		it("初回登録時にユーザーIDからハンドルが自動採番される", async () => {
+			const response = await app.request("/api/auth/sign-up/email", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					origin: "http://localhost:3000",
+				},
+				body: JSON.stringify({
+					name: "Signup Handle User",
+					email: "signup-handle@example.com",
+					password: "password1234",
+				}),
+			});
+			const json = (await response.json()) as {
+				user: {
+					id: string;
+					handle: string | null;
+				};
+			};
+
+			expect(response.status).toBe(200);
+			expect(json.user.handle).toBe(
+				createAutoUserHandleFromUserId(json.user.id),
+			);
 		});
 	});
 });

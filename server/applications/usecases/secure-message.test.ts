@@ -6,7 +6,7 @@ describe("createSecureMessageWorkflow", () => {
 	it("message を Blob として保存する", async () => {
 		const fakeSavedFile: UploadedFile<BlobFile> = {
 			id: "file_123" as FileId,
-			bucket: "techjam2026winter",
+			bucket: "vantan-bbs-twitter-clone",
 			contentType: "text/plain",
 			key: "secure-messages/file_123",
 			kind: "BlobFile",
@@ -17,14 +17,17 @@ describe("createSecureMessageWorkflow", () => {
 
 		const saveBlobFile = vi.fn().mockResolvedValue(fakeSavedFile);
 
-		const workflow = createSecureMessageWrokflow(saveBlobFile);
+		const workflow = createSecureMessageWrokflow(
+			saveBlobFile,
+			"vantan-bbs-twitter-clone",
+		);
 
 		const result = await workflow("hello", { id: "user_1" });
 
 		expect(result).toMatchInlineSnapshot(`
 			{
 			  "blob": Blob {},
-			  "bucket": "techjam2026winter",
+			  "bucket": "vantan-bbs-twitter-clone",
 			  "contentType": "text/plain",
 			  "id": "file_123",
 			  "key": "secure-messages/file_123",

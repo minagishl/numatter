@@ -35,73 +35,109 @@ export default function SignupPage() {
 	};
 
 	return (
-		<div className="mx-auto flex min-h-[70vh] w-full max-w-md flex-col justify-center">
-			<div className="rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm">
-				<h1 className="text-2xl font-semibold text-zinc-900">Create account</h1>
-				<p className="mt-2 text-sm text-zinc-500">
-					Sign up to access the secure API playground.
-				</p>
-				<form onSubmit={handleSubmit} className="mt-6 space-y-4">
-					<div className="flex flex-col gap-2">
-						<label className="text-sm font-medium text-zinc-700" htmlFor="name">
-							Name
-						</label>
-						<input
-							id="name"
-							required
-							value={name}
-							onChange={(event) => setName(event.target.value)}
-							className="rounded-xl border border-zinc-200 px-4 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-400"
-						/>
-					</div>
-					<div className="flex flex-col gap-2">
-						<label
-							className="text-sm font-medium text-zinc-700"
-							htmlFor="email"
-						>
-							Email
-						</label>
-						<input
-							id="email"
-							type="email"
-							required
-							value={email}
-							onChange={(event) => setEmail(event.target.value)}
-							className="rounded-xl border border-zinc-200 px-4 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-400"
-						/>
-					</div>
-					<div className="flex flex-col gap-2">
-						<label
-							className="text-sm font-medium text-zinc-700"
-							htmlFor="password"
-						>
-							Password
-						</label>
-						<input
-							id="password"
-							type="password"
-							required
-							value={password}
-							onChange={(event) => setPassword(event.target.value)}
-							className="rounded-xl border border-zinc-200 px-4 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-400"
-						/>
-					</div>
-					<button
-						type="submit"
-						disabled={isLoading}
-						className="w-full rounded-xl bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-70"
-					>
-						{isLoading ? "Creating account..." : "Create account"}
-					</button>
-				</form>
-				{error ? <p className="mt-4 text-sm text-rose-600">{error}</p> : null}
-				<p className="mt-6 text-sm text-zinc-500">
-					Already have an account?{" "}
-					<Link href="/login" className="font-medium text-zinc-900">
-						Log in
+		<div className="min-h-screen bg-[var(--app-bg)]">
+			<div className="mx-auto grid min-h-screen w-full max-w-[1100px] grid-cols-1 lg:grid-cols-[1.05fr_1fr]">
+				<section className="hidden flex-col justify-between bg-[linear-gradient(135deg,#1d9bf0,#198ad0,#0f5f8a)] p-12 text-white lg:flex">
+					<Link href="/" className="text-2xl font-extrabold tracking-tight">
+						Numatter
 					</Link>
-					.
-				</p>
+					<div>
+						<p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/80">
+							アカウントを作成
+						</p>
+						<h1 className="mt-4 text-5xl font-extrabold leading-tight">
+							あと数秒で参加できます！
+						</h1>
+						<p className="mt-4 max-w-md text-base text-white/90">
+							さぁ、あと少しで完了です！！
+						</p>
+					</div>
+					<p className="text-sm text-white/75">愛によってBuildされました。</p>
+				</section>
+
+				<section className="flex items-center justify-center px-6 py-12">
+					<div className="w-full max-w-[440px] rounded-3xl border border-[var(--border-subtle)] bg-white p-8 shadow-[0_24px_70px_-40px_rgba(15,20,25,0.45)] sm:p-10">
+						<p className="text-sm font-bold uppercase tracking-[0.18em] text-sky-500">
+							新時代が始まる
+						</p>
+						<h1 className="mt-3 text-3xl font-extrabold text-[var(--text-main)]">
+							アカウントを作成
+						</h1>
+						<form onSubmit={handleSubmit} className="mt-8 space-y-4">
+							<div className="space-y-2">
+								<label
+									className="text-sm font-bold text-[var(--text-subtle)]"
+									htmlFor="name"
+								>
+									名前
+								</label>
+								<input
+									id="name"
+									required
+									value={name}
+									onChange={(event) => setName(event.target.value)}
+									className="h-12 w-full rounded-2xl border border-[var(--border-subtle)] px-4 text-base text-[var(--text-main)] outline-none transition focus:border-sky-400"
+								/>
+							</div>
+
+							<div className="space-y-2">
+								<label
+									className="text-sm font-bold text-[var(--text-subtle)]"
+									htmlFor="email"
+								>
+									メールアドレス
+								</label>
+								<input
+									id="email"
+									type="email"
+									required
+									value={email}
+									onChange={(event) => setEmail(event.target.value)}
+									className="h-12 w-full rounded-2xl border border-[var(--border-subtle)] px-4 text-base text-[var(--text-main)] outline-none transition focus:border-sky-400"
+								/>
+							</div>
+
+							<div className="space-y-2">
+								<label
+									className="text-sm font-bold text-[var(--text-subtle)]"
+									htmlFor="password"
+								>
+									パスワード
+								</label>
+								<input
+									id="password"
+									type="password"
+									required
+									value={password}
+									onChange={(event) => setPassword(event.target.value)}
+									className="h-12 w-full rounded-2xl border border-[var(--border-subtle)] px-4 text-base text-[var(--text-main)] outline-none transition focus:border-sky-400"
+								/>
+							</div>
+
+							<button
+								type="submit"
+								disabled={isLoading}
+								className="h-12 w-full rounded-full bg-[var(--brand-primary)] px-4 text-sm font-bold text-white transition hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-70"
+							>
+								{isLoading ? "アカウントを作成中..." : "アカウントを作成"}
+							</button>
+						</form>
+
+						{error ? (
+							<p className="mt-4 text-sm text-rose-600">{error}</p>
+						) : null}
+
+						<p className="mt-6 text-sm text-[var(--text-subtle)]">
+							すでに参加していますか?{" "}
+							<Link
+								href="/login"
+								className="font-bold text-[var(--brand-primary)]"
+							>
+								今すぐログイン
+							</Link>
+						</p>
+					</div>
+				</section>
 			</div>
 		</div>
 	);

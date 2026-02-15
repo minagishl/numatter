@@ -1,11 +1,18 @@
 import { createHonoApp } from "@/server/create-app";
 import authRoute from "@/server/routes/auth";
+import discoverRoute from "@/server/routes/discover";
 import notificationsRoute from "@/server/routes/notifications";
+import postsRoute from "@/server/routes/posts";
+import searchRoute from "@/server/routes/search";
+import usersRoute from "@/server/routes/users";
 
 const app = createHonoApp()
 	.basePath("/api")
 	.route("/auth", authRoute)
-	.route("/notifications", notificationsRoute);
+	.route("/discover", discoverRoute)
+	.route("/notifications", notificationsRoute)
+	.route("/posts", postsRoute)
+	.route("/search", searchRoute)
+	.route("/users", usersRoute);
 
-export type AppType = typeof app;
 export { app };

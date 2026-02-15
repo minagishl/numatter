@@ -1,5 +1,11 @@
 packages:
   - .
+
 ignoredBuiltDependencies:
+  - cpu-features
+  - esbuild
+  - lefthook
+  - protobufjs
   - sharp
+  - ssh2
   - unrs-resolver
