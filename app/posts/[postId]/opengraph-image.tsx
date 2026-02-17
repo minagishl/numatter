@@ -52,10 +52,15 @@ export default async function OpenGraphImage({ params }: OpenGraphImageProps) {
 
 	const payload = buildPostOgPayload(post);
 	const authorImageUrl = normalizeImageUrl(post.author.image);
-	const postText = truncateText(
-		normalizeText(post.content) ?? payload.description,
-		CARD_TEXT_MAX_LENGTH,
-	);
+	const postContent = normalizeText(post.content);
+	const quoteContent = normalizeText(post.quotePost?.content);
+	const hasImages = payload.imageUrls.length > 0;
+	const postTextSource = hasImages
+		? postContent
+		: (postContent ?? quoteContent);
+	const postText = postTextSource
+		? truncateText(postTextSource, CARD_TEXT_MAX_LENGTH)
+		: null;
 
 	return new ImageResponse(
 		<div
@@ -146,31 +151,33 @@ export default async function OpenGraphImage({ params }: OpenGraphImageProps) {
 					</div>
 				</div>
 
-				<div
-					style={{
-						display: "flex",
-						marginTop: 16,
-						fontSize: 30,
-						lineHeight: 1.35,
-						fontWeight: 500,
-						color: "#1a2740",
-						wordBreak: "break-word",
-					}}
-				>
-					{postText}
-				</div>
-
-				{payload.imageUrls.length > 0 ? (
-					<div
-						style={{
-							display: "flex",
-							position: "relative",
-							flex: 1,
-							marginTop: 16,
-						}}
-					>
-						<PostImageGrid imageUrls={payload.imageUrls} />
-					</div>
+				{hasImages ? (
+					<>
+						{postText ? (
+							<div
+								style={{
+									display: "flex",
+									marginTop: 16,
+									fontSize: 30,
+									lineHeight: 1.35,
+									fontWeight: 500,
+									color: "#1a2740",
+									wordBreak: "break-word",
+								}}
+							>
+								{postText}
+							</div>
+						) : null}
+						<div
+							style={{
+								display: "flex",
+								flex: 1,
+								marginTop: postText ? 16 : 0,
+							}}
+						>
+							<PostImageGrid imageUrls={payload.imageUrls} />
+						</div>
+					</>
 				) : (
 					<div
 						style={{
@@ -179,11 +186,26 @@ export default async function OpenGraphImage({ params }: OpenGraphImageProps) {
 							justifyContent: "center",
 							flex: 1,
 							marginTop: 16,
-							borderRadius: 24,
-							border: "2px dashed #cedcf6",
-							backgroundColor: "#f7fbff",
+							padding: "0 20px",
 						}}
-					/>
+					>
+						{postText ? (
+							<div
+								style={{
+									display: "flex",
+									fontSize: 36,
+									lineHeight: 1.35,
+									fontWeight: 500,
+									color: "#1a2740",
+									wordBreak: "break-word",
+									textAlign: "center",
+									maxWidth: "100%",
+								}}
+							>
+								{postText}
+							</div>
+						) : null}
+					</div>
 				)}
 			</div>
 		</div>,

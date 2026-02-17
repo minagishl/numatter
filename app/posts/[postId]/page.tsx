@@ -37,16 +37,17 @@ export async function generateMetadata({
 	const payload = buildPostOgPayload(post);
 	const postUrl = createPostPageUrl(post.id);
 	const ogImageUrl = createPostOgImageUrl(post);
+	const description = payload.description ?? "";
 
 	return {
 		title: payload.title,
-		description: payload.description,
+		description,
 		alternates: {
 			canonical: postUrl,
 		},
 		openGraph: {
 			title: payload.title,
-			description: payload.description,
+			description,
 			url: postUrl,
 			type: "article",
 			siteName: "Numatter",
@@ -65,7 +66,7 @@ export async function generateMetadata({
 		twitter: {
 			card: "summary_large_image",
 			title: payload.title,
-			description: payload.description,
+			description,
 			images: [ogImageUrl],
 		},
 	};

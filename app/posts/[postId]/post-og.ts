@@ -1,7 +1,6 @@
 import type { PostSummary } from "@/lib/social-api";
 import { createDisplayHandle } from "@/lib/user-handle";
 
-const SITE_NAME = "Numatter";
 const FALLBACK_SITE_ORIGIN = "http://localhost:3000";
 const MAX_POST_OG_IMAGES = 4;
 const MAX_TITLE_LENGTH = 60;
@@ -21,7 +20,7 @@ type ImageSelection = {
 export type PostOgPayload = {
 	post: PostSummary;
 	title: string;
-	description: string;
+	description: string | null;
 	handle: string;
 	imageUrls: string[];
 	isQuoteImageFallback: boolean;
@@ -98,7 +97,7 @@ export const buildPostOgPayload = (post: PostSummary): PostOgPayload => {
 
 	return {
 		post,
-		title: buildTitle(post.author.name, normalizedContent, imageSelection),
+		title: buildTitle(post.author.name, normalizedContent),
 		description: buildDescription({
 			post,
 			content: normalizedContent,
@@ -110,26 +109,17 @@ export const buildPostOgPayload = (post: PostSummary): PostOgPayload => {
 	};
 };
 
-const buildTitle = (
-	authorName: string,
-	content: string | null,
-	imageSelection: ImageSelection,
-) => {
+const buildTitle = (authorName: string, content: string | null) => {
 	if (content) {
-		return `${truncateText(content, MAX_TITLE_LENGTH)} | ${SITE_NAME}`;
+		return truncateText(content, MAX_TITLE_LENGTH);
 	}
 
-	if (imageSelection.urls.length > 0) {
-		const imageCount = imageSelection.urls.length;
-		const imageWord = imageCount === 1 ? "image" : "images";
-		if (imageSelection.isQuoteImageFallback) {
-			return `${authorName} quote with ${imageCount} ${imageWord} | ${SITE_NAME}`;
-		}
-
-		return `${authorName} shared ${imageCount} ${imageWord} | ${SITE_NAME}`;
+	const trimmedAuthorName = authorName.trim();
+	if (trimmedAuthorName) {
+		return `${trimmedAuthorName}さんの投稿`;
 	}
 
-	return `${authorName} posted on ${SITE_NAME}`;
+	return "投稿";
 };
 
 const buildDescription = (params: {
@@ -137,29 +127,21 @@ const buildDescription = (params: {
 	content: string | null;
 	imageSelection: ImageSelection;
 }) => {
-	const { post, content, imageSelection } = params;
+	const { content, imageSelection, post } = params;
 	if (content) {
 		return truncateText(content, MAX_DESCRIPTION_LENGTH);
 	}
 
-	if (!imageSelection.isQuoteImageFallback && post.images.length > 0) {
-		const imageCount = post.images.length;
-		const imageWord = imageCount === 1 ? "image" : "images";
-		return `${post.author.name} shared ${imageCount} ${imageWord} on ${SITE_NAME}.`;
+	if (imageSelection.urls.length > 0) {
+		return null;
 	}
 
 	const quoteContent = normalizeText(post.quotePost?.content);
 	if (quoteContent) {
-		return `Quoted post: ${truncateText(quoteContent, MAX_DESCRIPTION_LENGTH - 13)}`;
+		return truncateText(quoteContent, MAX_DESCRIPTION_LENGTH);
 	}
 
-	if (imageSelection.isQuoteImageFallback && imageSelection.urls.length > 0) {
-		const imageCount = imageSelection.urls.length;
-		const imageWord = imageCount === 1 ? "image" : "images";
-		return `${post.author.name} shared a quoted post with ${imageCount} ${imageWord}.`;
-	}
-
-	return `${post.author.name} posted on ${SITE_NAME}.`;
+	return null;
 };
 
 const selectPreviewImages = (post: PostSummary): ImageSelection => {
