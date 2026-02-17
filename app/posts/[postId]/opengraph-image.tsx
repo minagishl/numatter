@@ -1,9 +1,9 @@
 /* biome-ignore-all lint/performance/noImgElement: next/og image rendering requires img tags. */
 import { ImageResponse } from "next/og";
 
-import { buildPostOgPayload, fetchPostForOg } from "./post-og";
+import { buildPostOgPayload, fetchPostForOg, toAbsoluteUrl } from "./post-og";
 
-export const alt = "Numatter post preview";
+export const alt = "Post preview";
 export const size = {
 	width: 1200,
 	height: 630,
@@ -28,7 +28,7 @@ export default async function OpenGraphImage({ params }: OpenGraphImageProps) {
 					width: "100%",
 					height: "100%",
 					backgroundColor: "#ecf3ff",
-					padding: 44,
+					padding: 24,
 				}}
 			>
 				<div
@@ -36,18 +36,13 @@ export default async function OpenGraphImage({ params }: OpenGraphImageProps) {
 						display: "flex",
 						width: "100%",
 						height: "100%",
-						borderRadius: 32,
+						borderRadius: 26,
 						backgroundColor: "#ffffff",
 						border: "2px solid #d8e5ff",
-						alignItems: "center",
-						justifyContent: "center",
-						fontSize: 44,
-						fontWeight: 700,
-						color: "#1f365c",
+						alignItems: "flex-start",
+						justifyContent: "flex-start",
 					}}
-				>
-					Numatter
-				</div>
+				/>
 			</div>,
 			{
 				...size,
@@ -56,6 +51,7 @@ export default async function OpenGraphImage({ params }: OpenGraphImageProps) {
 	}
 
 	const payload = buildPostOgPayload(post);
+	const authorImageUrl = normalizeImageUrl(post.author.image);
 	const postText = truncateText(
 		normalizeText(post.content) ?? payload.description,
 		CARD_TEXT_MAX_LENGTH,
@@ -68,7 +64,7 @@ export default async function OpenGraphImage({ params }: OpenGraphImageProps) {
 				width: "100%",
 				height: "100%",
 				backgroundColor: "#ecf3ff",
-				padding: 44,
+				padding: 24,
 			}}
 		>
 			<div
@@ -77,10 +73,10 @@ export default async function OpenGraphImage({ params }: OpenGraphImageProps) {
 					flexDirection: "column",
 					width: "100%",
 					height: "100%",
-					borderRadius: 32,
+					borderRadius: 26,
 					backgroundColor: "#ffffff",
 					border: "2px solid #d8e5ff",
-					padding: "34px 38px",
+					padding: "26px 30px",
 				}}
 			>
 				<div
@@ -92,31 +88,44 @@ export default async function OpenGraphImage({ params }: OpenGraphImageProps) {
 					<div
 						style={{
 							display: "flex",
-							width: 72,
-							height: 72,
+							width: 68,
+							height: 68,
 							borderRadius: 9999,
 							backgroundColor: "#1c3f77",
 							alignItems: "center",
 							justifyContent: "center",
-							fontSize: 32,
+							overflow: "hidden",
+							fontSize: 30,
 							fontWeight: 700,
 							color: "#ffffff",
 						}}
 					>
-						{getAvatarLabel(post.author.name)}
+						{authorImageUrl ? (
+							<img
+								src={authorImageUrl}
+								alt={post.author.name}
+								style={{
+									width: "100%",
+									height: "100%",
+									objectFit: "cover",
+								}}
+							/>
+						) : (
+							getAvatarLabel(post.author.name)
+						)}
 					</div>
 					<div
 						style={{
 							display: "flex",
 							flexDirection: "column",
-							marginLeft: 16,
+							marginLeft: 14,
 							maxWidth: 660,
 						}}
 					>
 						<div
 							style={{
 								display: "flex",
-								fontSize: 36,
+								fontSize: 34,
 								fontWeight: 700,
 								color: "#13223b",
 							}}
@@ -127,7 +136,7 @@ export default async function OpenGraphImage({ params }: OpenGraphImageProps) {
 							style={{
 								display: "flex",
 								marginTop: 3,
-								fontSize: 24,
+								fontSize: 22,
 								fontWeight: 500,
 								color: "#5b6c88",
 							}}
@@ -135,27 +144,13 @@ export default async function OpenGraphImage({ params }: OpenGraphImageProps) {
 							{payload.handle}
 						</div>
 					</div>
-					<div
-						style={{
-							display: "flex",
-							marginLeft: "auto",
-							borderRadius: 9999,
-							padding: "10px 18px",
-							backgroundColor: "#dbe8ff",
-							fontSize: 24,
-							fontWeight: 700,
-							color: "#1e3a66",
-						}}
-					>
-						Numatter
-					</div>
 				</div>
 
 				<div
 					style={{
 						display: "flex",
-						marginTop: 22,
-						fontSize: 32,
+						marginTop: 16,
+						fontSize: 30,
 						lineHeight: 1.35,
 						fontWeight: 500,
 						color: "#1a2740",
@@ -171,28 +166,10 @@ export default async function OpenGraphImage({ params }: OpenGraphImageProps) {
 							display: "flex",
 							position: "relative",
 							flex: 1,
-							marginTop: 24,
+							marginTop: 16,
 						}}
 					>
 						<PostImageGrid imageUrls={payload.imageUrls} />
-						{payload.isQuoteImageFallback ? (
-							<div
-								style={{
-									display: "flex",
-									position: "absolute",
-									top: 16,
-									right: 16,
-									borderRadius: 9999,
-									padding: "8px 14px",
-									backgroundColor: "rgba(20, 34, 58, 0.78)",
-									fontSize: 20,
-									fontWeight: 600,
-									color: "#f8fbff",
-								}}
-							>
-								Quoted media
-							</div>
-						) : null}
 					</div>
 				) : (
 					<div
@@ -201,16 +178,12 @@ export default async function OpenGraphImage({ params }: OpenGraphImageProps) {
 							alignItems: "center",
 							justifyContent: "center",
 							flex: 1,
-							marginTop: 24,
+							marginTop: 16,
 							borderRadius: 24,
 							border: "2px dashed #cedcf6",
-							color: "#52617b",
-							fontSize: 28,
-							fontWeight: 600,
+							backgroundColor: "#f7fbff",
 						}}
-					>
-						Text post preview
-					</div>
+					/>
 				)}
 			</div>
 		</div>,
@@ -337,6 +310,24 @@ const splitColumnStyle = {
 	flexDirection: "column" as const,
 	flex: 1,
 	gap: 12,
+};
+
+const normalizeImageUrl = (value: string | null | undefined): string | null => {
+	if (!value) {
+		return null;
+	}
+
+	try {
+		const normalizedUrl = new URL(value, toAbsoluteUrl("/")).toString();
+		const parsed = new URL(normalizedUrl);
+		if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+			return null;
+		}
+
+		return normalizedUrl;
+	} catch {
+		return null;
+	}
 };
 
 const getAvatarLabel = (name: string): string => {
