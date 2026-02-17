@@ -1,6 +1,7 @@
 "use client";
 
 import { type FormEvent, useMemo, useState } from "react";
+import { useChatSubmit } from "use-chat-submit";
 
 import { authClient } from "@/lib/auth-client";
 import {
@@ -55,13 +56,23 @@ export function PostComposer({
 			})
 		: null;
 
-	const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-		event.preventDefault();
+	const submitPost = async (nextContent = content) => {
+		const nextCountedLength = countPostContentLength(nextContent);
+		const isNextOverLength = nextCountedLength > MAX_POST_CONTENT_LENGTH;
+		const isNextSubmitDisabled =
+			isLoading ||
+			isNextOverLength ||
+			(nextContent.trim().length === 0 && images.length === 0);
+
+		if (isNextSubmitDisabled) {
+			return;
+		}
+
 		setError(null);
 		setIsLoading(true);
 
 		const formData = new FormData();
-		formData.set("content", content);
+		formData.set("content", nextContent);
 		for (const image of images) {
 			formData.append("images", image);
 		}
@@ -81,9 +92,22 @@ export function PostComposer({
 		}
 	};
 
+	const { getTextareaProps } = useChatSubmit({
+		mode: "mod-enter",
+		allowEmptySubmit: true,
+		onSubmit: (nextContent) => {
+			void submitPost(nextContent);
+		},
+	});
+
+	const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+		void submitPost();
+	};
+
 	return (
 		<form
-			onSubmit={handleSubmit}
+			onSubmit={handleFormSubmit}
 			className={frameClassName}
 			id={variant === "home" ? "composer" : undefined}
 		>
@@ -113,15 +137,17 @@ export function PostComposer({
 					) : null}
 
 					<textarea
-						value={content}
-						onChange={(event) => setContent(event.target.value)}
-						rows={variant === "home" ? 4 : 3}
-						placeholder={placeholder}
-						className={`w-full resize-none rounded-2xl border px-4 py-3 text-base text-[var(--text-main)] outline-none transition ${
-							variant === "home"
-								? "border-transparent bg-transparent px-0 text-xl placeholder:text-zinc-500"
-								: "border-[var(--border-subtle)] bg-white placeholder:text-zinc-400 focus:border-sky-400"
-						}`}
+						{...getTextareaProps({
+							value: content,
+							onChange: (event) => setContent(event.target.value),
+							rows: variant === "home" ? 4 : 3,
+							placeholder,
+							className: `w-full resize-none rounded-2xl border px-4 py-3 text-base text-[var(--text-main)] outline-none transition ${
+								variant === "home"
+									? "border-transparent bg-transparent px-0 text-xl placeholder:text-zinc-500"
+									: "border-[var(--border-subtle)] bg-white placeholder:text-zinc-400 focus:border-sky-400"
+							}`,
+						})}
 					/>
 
 					{images.length > 0 ? (
