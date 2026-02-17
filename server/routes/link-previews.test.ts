@@ -80,6 +80,67 @@ describe("/routes/link-previews", () => {
 		expect(linkB?.title).toBeNull();
 	});
 
+	it("先頭200KBを超える位置にあるOGPメタ情報も取得する", async () => {
+		await db.insert(schema.links).values({
+			id: "link_preview_late_ogp",
+			normalizedUrl: "https://example.com/late-ogp",
+			host: "example.com",
+			displayUrl: "example.com/late-ogp",
+		});
+
+		const largeHeadPadding = " ".repeat(210_000);
+		const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+			new Response(
+				`<html><head>
+					<meta charset="utf-8" />
+					${largeHeadPadding}
+					<meta property="og:title" content="Late OGP title" />
+					<meta property="og:description" content="Late OGP description" />
+					<meta property="og:image" content="https://cdn.example.com/late-card.png" />
+					<meta property="og:site_name" content="Late Example Site" />
+				</head></html>`,
+				{
+					status: 200,
+					headers: {
+						"content-type": "text/html; charset=utf-8",
+					},
+				},
+			),
+		);
+
+		const response = await app.request("/refresh", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				linkIds: ["link_preview_late_ogp"],
+			}),
+		});
+		const body = (await response.json()) as {
+			updated: { id: string; title: string | null } | null;
+		};
+
+		const [link] = await db
+			.select({
+				title: schema.links.title,
+				description: schema.links.description,
+				imageUrl: schema.links.imageUrl,
+				siteName: schema.links.siteName,
+			})
+			.from(schema.links)
+			.where(eq(schema.links.id, "link_preview_late_ogp"))
+			.limit(1);
+
+		expect(response.status).toBe(200);
+		expect(fetchSpy).toHaveBeenCalledTimes(1);
+		expect(body.updated?.id).toBe("link_preview_late_ogp");
+		expect(link?.title).toBe("Late OGP title");
+		expect(link?.description).toBe("Late OGP description");
+		expect(link?.imageUrl).toBe("https://cdn.example.com/late-card.png");
+		expect(link?.siteName).toBe("Late Example Site");
+	});
+
 	it("次回更新期限内のリンクは更新しない", async () => {
 		await db.insert(schema.links).values({
 			id: "link_preview_fresh",

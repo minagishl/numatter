@@ -7,7 +7,7 @@ import { createHonoApp } from "../create-app";
 const OGP_REFRESH_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const OGP_RETRY_INTERVAL_MS = 60 * 60 * 1000;
 const OGP_TIMEOUT_MS = 5_000;
-const OGP_HTML_MAX_LENGTH = 200_000;
+const OGP_HTML_MAX_LENGTH = 1_500_000;
 const MAX_REFRESH_LINK_IDS = 100;
 
 const refreshRequestSchema = z.object({
@@ -155,7 +155,7 @@ const fetchOpenGraphPreview = async (targetUrl: string) => {
 		throw new Error("OGP source is not HTML");
 	}
 
-	const html = (await response.text()).slice(0, OGP_HTML_MAX_LENGTH);
+	const html = extractMetadataSourceHtml(await response.text());
 	const title =
 		extractMetaContent(html, ["og:title", "twitter:title"]) ??
 		extractTitleTag(html);
@@ -163,7 +163,13 @@ const fetchOpenGraphPreview = async (targetUrl: string) => {
 		extractMetaContent(html, ["og:description", "twitter:description"]) ?? null;
 	const siteName =
 		extractMetaContent(html, ["og:site_name"]) ?? parsedTargetUrl.host;
-	const image = extractMetaContent(html, ["og:image", "twitter:image"]);
+	const image = extractMetaContent(html, [
+		"og:image:secure_url",
+		"og:image",
+		"og:image:url",
+		"twitter:image",
+		"twitter:image:src",
+	]);
 
 	return {
 		title: normalizeMetaValue(title),
@@ -171,6 +177,16 @@ const fetchOpenGraphPreview = async (targetUrl: string) => {
 		imageUrl: toAbsoluteHttpUrl(image, parsedTargetUrl.toString()),
 		siteName: normalizeMetaValue(siteName),
 	};
+};
+
+const extractMetadataSourceHtml = (html: string) => {
+	const limitedHtml = html.slice(0, OGP_HTML_MAX_LENGTH);
+	const headCloseMatch = /<\/head\s*>/iu.exec(limitedHtml);
+	if (!headCloseMatch || headCloseMatch.index === undefined) {
+		return limitedHtml;
+	}
+
+	return limitedHtml.slice(0, headCloseMatch.index + headCloseMatch[0].length);
 };
 
 const extractMetaContent = (html: string, keys: string[]) => {
