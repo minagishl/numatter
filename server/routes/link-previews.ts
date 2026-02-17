@@ -1,7 +1,10 @@
 import { zValidator } from "@hono/zod-validator";
 import { eq, inArray } from "drizzle-orm";
+import { HTTPException } from "hono/http-exception";
+import { uuidv7 } from "uuidv7";
 import { z } from "zod";
 import * as schema from "@/db/schema";
+import { getDeveloperUserOrThrow } from "@/server/middleware/auth";
 import { createHonoApp } from "../create-app";
 
 const OGP_REFRESH_INTERVAL_MS = 24 * 60 * 60 * 1000;
@@ -20,10 +23,25 @@ const refreshRequestSchema = z.object({
 	linkIds: z.array(z.string().min(1)).max(MAX_REFRESH_LINK_IDS),
 });
 
-const app = createHonoApp().post(
-	"/refresh",
-	zValidator("json", refreshRequestSchema),
-	async (c) => {
+const previewRequestSchema = z.object({
+	url: z.string().trim().url().max(2_048),
+});
+
+const linkSummarySelection = {
+	id: schema.links.id,
+	normalizedUrl: schema.links.normalizedUrl,
+	host: schema.links.host,
+	displayUrl: schema.links.displayUrl,
+	title: schema.links.title,
+	description: schema.links.description,
+	imageUrl: schema.links.imageUrl,
+	siteName: schema.links.siteName,
+	ogpFetchedAt: schema.links.ogpFetchedAt,
+	ogpNextRefreshAt: schema.links.ogpNextRefreshAt,
+};
+
+const app = createHonoApp()
+	.post("/refresh", zValidator("json", refreshRequestSchema), async (c) => {
 		const { linkIds } = c.req.valid("json");
 		const uniqueLinkIds = [...new Set(linkIds)];
 
@@ -33,18 +51,7 @@ const app = createHonoApp().post(
 
 		const db = c.get("db");
 		const linkRows = await db
-			.select({
-				id: schema.links.id,
-				normalizedUrl: schema.links.normalizedUrl,
-				host: schema.links.host,
-				displayUrl: schema.links.displayUrl,
-				title: schema.links.title,
-				description: schema.links.description,
-				imageUrl: schema.links.imageUrl,
-				siteName: schema.links.siteName,
-				ogpFetchedAt: schema.links.ogpFetchedAt,
-				ogpNextRefreshAt: schema.links.ogpNextRefreshAt,
-			})
+			.select(linkSummarySelection)
 			.from(schema.links)
 			.where(inArray(schema.links.id, uniqueLinkIds));
 
@@ -103,41 +110,137 @@ const app = createHonoApp().post(
 				updatedAt: now,
 			})
 			.where(eq(schema.links.id, targetLink.id))
-			.returning({
-				id: schema.links.id,
-				normalizedUrl: schema.links.normalizedUrl,
-				host: schema.links.host,
-				displayUrl: schema.links.displayUrl,
-				title: schema.links.title,
-				description: schema.links.description,
-				imageUrl: schema.links.imageUrl,
-				siteName: schema.links.siteName,
-				ogpFetchedAt: schema.links.ogpFetchedAt,
-				ogpNextRefreshAt: schema.links.ogpNextRefreshAt,
-			});
+			.returning(linkSummarySelection);
 
 		if (!updatedLink) {
 			return c.json({ updated: null });
 		}
 
 		return c.json({
-			updated: {
-				id: updatedLink.id,
-				url: updatedLink.normalizedUrl,
-				host: updatedLink.host,
-				displayUrl: updatedLink.displayUrl,
-				title: updatedLink.title,
-				description: updatedLink.description,
-				imageUrl: updatedLink.imageUrl,
-				siteName: updatedLink.siteName,
-				ogpFetchedAt: updatedLink.ogpFetchedAt?.toISOString() ?? null,
-				ogpNextRefreshAt: updatedLink.ogpNextRefreshAt?.toISOString() ?? null,
-			},
+			updated: toLinkSummary(updatedLink),
 		});
-	},
-);
+	})
+	.post("/preview", zValidator("json", previewRequestSchema), async (c) => {
+		await getDeveloperUserOrThrow(c);
+
+		const { url } = c.req.valid("json");
+		let normalizedUrl: string;
+		try {
+			normalizedUrl = normalizePreviewUrl(url);
+		} catch (error) {
+			if (error instanceof Error) {
+				throw new HTTPException(400, { message: error.message });
+			}
+			throw new HTTPException(400, { message: "Invalid URL" });
+		}
+
+		const preview = await fetchOpenGraphPreview(normalizedUrl).catch(() => {
+			throw new HTTPException(502, {
+				message: "Failed to fetch link preview",
+			});
+		});
+
+		const parsedUrl = new URL(normalizedUrl);
+		const now = new Date();
+		const nextRefreshAt = new Date(now.getTime() + OGP_REFRESH_INTERVAL_MS);
+		const [savedLink] = await c
+			.get("db")
+			.insert(schema.links)
+			.values({
+				id: uuidv7(),
+				normalizedUrl,
+				host: parsedUrl.host,
+				displayUrl: createDisplayUrl(parsedUrl),
+				title: preview.title,
+				description: preview.description,
+				imageUrl: preview.imageUrl,
+				siteName: preview.siteName,
+				ogpFetchedAt: now,
+				ogpNextRefreshAt: nextRefreshAt,
+				createdAt: now,
+				updatedAt: now,
+			})
+			.onConflictDoUpdate({
+				target: schema.links.normalizedUrl,
+				set: {
+					host: parsedUrl.host,
+					displayUrl: createDisplayUrl(parsedUrl),
+					title: preview.title,
+					description: preview.description,
+					imageUrl: preview.imageUrl,
+					siteName: preview.siteName,
+					ogpFetchedAt: now,
+					ogpNextRefreshAt: nextRefreshAt,
+					updatedAt: now,
+				},
+			})
+			.returning(linkSummarySelection);
+
+		if (!savedLink) {
+			throw new Error("Failed to save link preview");
+		}
+
+		return c.json({
+			link: toLinkSummary(savedLink),
+		});
+	});
 
 export default app;
+
+const normalizePreviewUrl = (value: string) => {
+	const url = assertSupportedHttpUrl(value);
+	url.hash = "";
+	url.hostname = url.hostname.toLowerCase();
+
+	if (
+		(url.protocol === "https:" && url.port === "443") ||
+		(url.protocol === "http:" && url.port === "80")
+	) {
+		url.port = "";
+	}
+
+	if (url.pathname.length > 1) {
+		url.pathname = url.pathname.replace(/\/+$/u, "") || "/";
+	}
+
+	return url.toString();
+};
+
+const createDisplayUrl = (url: URL) => {
+	const displayPath = `${url.pathname}${url.search}`;
+	const withoutProtocol = `${url.host}${displayPath === "/" ? "" : displayPath}`;
+	if (withoutProtocol.length <= 80) {
+		return withoutProtocol;
+	}
+
+	return `${withoutProtocol.slice(0, 77)}...`;
+};
+
+const toLinkSummary = (link: {
+	id: string;
+	normalizedUrl: string;
+	host: string;
+	displayUrl: string;
+	title: string | null;
+	description: string | null;
+	imageUrl: string | null;
+	siteName: string | null;
+	ogpFetchedAt: Date | null;
+	ogpNextRefreshAt: Date | null;
+}) => {
+	return {
+		id: link.id,
+		url: link.normalizedUrl,
+		host: link.host,
+		displayUrl: link.displayUrl,
+		title: link.title,
+		description: link.description,
+		imageUrl: link.imageUrl,
+		siteName: link.siteName,
+		ogpFetchedAt: link.ogpFetchedAt?.toISOString() ?? null,
+		ogpNextRefreshAt: link.ogpNextRefreshAt?.toISOString() ?? null,
+	};
+};
 
 const fetchOpenGraphPreview = async (targetUrl: string) => {
 	const parsedTargetUrl = assertSupportedHttpUrl(targetUrl);

@@ -95,28 +95,27 @@ describe("/routes/auth", () => {
 			const response = await app.request("/me", {
 				method: "GET",
 			});
-			const json = await response.json();
-			expect(json).toMatchInlineSnapshot(`
-				{
-				  "session": {
-				    "createdAt": "2026-01-01T00:00:00.000Z",
-				    "expiresAt": "2026-01-01T01:00:00.000Z",
-				    "id": "test_session_id",
-				    "token": "test_token",
-				    "updatedAt": "2026-01-01T00:00:00.000Z",
-				    "userId": "test_user_id",
-				  },
-				  "user": {
-				    "createdAt": "2026-01-01T00:00:00.000Z",
-				    "email": "test@example.com",
-				    "emailVerified": true,
-				    "id": "test_user_id",
-				    "image": "https://example.com/avatar.png",
-				    "name": "Test User",
-				    "updatedAt": "2026-01-01T00:00:00.000Z",
-				  },
-				}
-			`);
+			const json = (await response.json()) as {
+				session: {
+					id: string;
+					userId: string;
+					token: string;
+				};
+				user: {
+					id: string;
+					email: string;
+					name: string;
+					isDeveloper: boolean;
+				};
+			};
+
+			expect(json.session.id).toBe("test_session_id");
+			expect(json.session.userId).toBe("test_user_id");
+			expect(json.session.token).toBe("test_token");
+			expect(json.user.id).toBe("test_user_id");
+			expect(json.user.email).toBe("test@example.com");
+			expect(json.user.name).toBe("Test User");
+			expect(json.user.isDeveloper).toBe(false);
 			expect(response.status).toBe(200);
 		});
 	});

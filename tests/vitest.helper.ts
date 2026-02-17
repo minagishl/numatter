@@ -42,12 +42,14 @@ export async function setup() {
 		await truncate();
 	});
 
-	async function createUser() {
+	async function createUser(options?: { isDeveloper?: boolean }) {
+		const isDeveloper = options?.isDeveloper ?? false;
 		const user: typeof auth.$Infer.Session.user = {
 			id: "test_user_id",
 			name: "Test User",
 			email: "test@example.com",
 			image: "https://example.com/avatar.png",
+			isDeveloper,
 			createdAt: new Date("2026-01-01"),
 			updatedAt: new Date("2026-01-01"),
 			emailVerified: true,
@@ -61,7 +63,17 @@ export async function setup() {
 			createdAt: new Date("2026-01-01"),
 			updatedAt: new Date("2026-01-01"),
 		};
-		await db.insert(schema.user).values(user);
+		await db.insert(schema.user).values({
+			id: user.id,
+			name: user.name,
+			handle: user.handle ?? null,
+			isDeveloper: Boolean(user.isDeveloper),
+			email: user.email,
+			emailVerified: user.emailVerified,
+			image: user.image ?? null,
+			createdAt: user.createdAt,
+			updatedAt: user.updatedAt,
+		});
 		await db.insert(schema.session).values(session);
 
 		mock.authMiddleware.mockImplementation(async (c, next) => {

@@ -5,13 +5,143 @@ import * as schema from "@/db/schema";
 import { setup } from "@/tests/vitest.helper";
 import app from "./link-previews";
 
-const { db } = await setup();
+const { createUser, db } = await setup();
 
 afterEach(() => {
 	vi.restoreAllMocks();
 });
 
 describe("/routes/link-previews", () => {
+	it("未ログイン時は /preview を叩けない", async () => {
+		const response = await app.request("/preview", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				url: "https://example.com/preview",
+			}),
+		});
+
+		expect(response.status).toBe(401);
+	});
+
+	it("開発者フラグがないユーザーは /preview を叩けない", async () => {
+		await createUser();
+
+		const response = await app.request("/preview", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				url: "https://example.com/preview",
+			}),
+		});
+
+		expect(response.status).toBe(403);
+	});
+
+	it("/preview は毎回OGPを再取得して保存する", async () => {
+		await createUser({ isDeveloper: true });
+
+		const fetchSpy = vi
+			.spyOn(globalThis, "fetch")
+			.mockResolvedValueOnce(
+				new Response(
+					`<html><head>
+						<meta property="og:title" content="Preview title #1" />
+						<meta property="og:description" content="Preview description #1" />
+						<meta property="og:image" content="https://cdn.example.com/preview-1.png" />
+						<meta property="og:site_name" content="Preview Site" />
+					</head></html>`,
+					{
+						status: 200,
+						headers: {
+							"content-type": "text/html; charset=utf-8",
+						},
+					},
+				),
+			)
+			.mockResolvedValueOnce(
+				new Response(
+					`<html><head>
+						<meta property="og:title" content="Preview title #2" />
+						<meta property="og:description" content="Preview description #2" />
+						<meta property="og:image" content="https://cdn.example.com/preview-2.png" />
+						<meta property="og:site_name" content="Preview Site" />
+					</head></html>`,
+					{
+						status: 200,
+						headers: {
+							"content-type": "text/html; charset=utf-8",
+						},
+					},
+				),
+			);
+
+		const firstResponse = await app.request("/preview", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				url: "https://example.com/always-refresh",
+			}),
+		});
+		const firstBody = (await firstResponse.json()) as {
+			link: { id: string; title: string | null; url: string };
+		};
+
+		const secondResponse = await app.request("/preview", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				url: "https://example.com/always-refresh",
+			}),
+		});
+		const secondBody = (await secondResponse.json()) as {
+			link: { id: string; title: string | null; url: string };
+		};
+
+		const [savedLink] = await db
+			.select({
+				title: schema.links.title,
+				normalizedUrl: schema.links.normalizedUrl,
+			})
+			.from(schema.links)
+			.where(
+				eq(schema.links.normalizedUrl, "https://example.com/always-refresh"),
+			)
+			.limit(1);
+
+		expect(firstResponse.status).toBe(200);
+		expect(secondResponse.status).toBe(200);
+		expect(fetchSpy).toHaveBeenCalledTimes(2);
+		expect(firstBody.link.url).toBe("https://example.com/always-refresh");
+		expect(firstBody.link.title).toBe("Preview title #1");
+		expect(secondBody.link.title).toBe("Preview title #2");
+		expect(savedLink?.title).toBe("Preview title #2");
+	});
+
+	it("/preview はローカルネットワーク向けURLを拒否する", async () => {
+		await createUser({ isDeveloper: true });
+
+		const response = await app.request("/preview", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				url: "http://localhost:3000/private",
+			}),
+		});
+
+		expect(response.status).toBe(400);
+	});
+
 	it("1回のリクエストで更新するリンクは最大1件", async () => {
 		await db.insert(schema.links).values([
 			{
