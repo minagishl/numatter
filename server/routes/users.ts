@@ -40,7 +40,6 @@ const app = createHonoApp()
 				id: schema.user.id,
 				name: schema.user.name,
 				handle: schema.user.handle,
-				email: schema.user.email,
 				image: schema.user.image,
 				bio: schema.user.bio,
 				bannerImage: schema.user.bannerImage,
@@ -158,6 +157,19 @@ const app = createHonoApp()
 
 		const profile = await buildProfileResponse(db, user.id, user.id);
 		return c.json(profile);
+	})
+	.post("/me/developer", async (c) => {
+		const { user } = await getUserOrThrow(c);
+		await c
+			.get("db")
+			.update(schema.user)
+			.set({
+				isDeveloper: true,
+				updatedAt: new Date(),
+			})
+			.where(eq(schema.user.id, user.id));
+
+		return c.json({ isDeveloper: true });
 	})
 	.get("/:userId", zValidator("param", userIdParamSchema), async (c) => {
 		const { userId } = c.req.valid("param");
@@ -312,7 +324,6 @@ const buildProfileResponse = async (
 			id: schema.user.id,
 			name: schema.user.name,
 			handle: schema.user.handle,
-			email: schema.user.email,
 			image: schema.user.image,
 			bio: schema.user.bio,
 			bannerImage: schema.user.bannerImage,

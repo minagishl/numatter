@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import * as schema from "@/db/schema";
 import { setup } from "@/tests/vitest.helper";
@@ -20,13 +21,69 @@ describe("/routes/users", () => {
 			method: "GET",
 		});
 		const json = (await response.json()) as {
-			user: { id: string; email: string; handle: string | null };
+			user: { id: string; handle: string | null };
 		};
 
 		expect(response.status).toBe(200);
 		expect(json.user.id).toBe(user.id);
-		expect(json.user.email).toBe(user.email);
 		expect(json.user.handle).toBeNull();
+		expect(json.user).not.toHaveProperty("email");
+	});
+
+	it("他ユーザー取得時にメールアドレスは含まれない", async () => {
+		await createUser();
+		await db.insert(schema.user).values({
+			id: "public_user_id",
+			name: "Public User",
+			handle: "public_user",
+			email: "public@example.com",
+			emailVerified: true,
+			createdAt: new Date("2026-01-01"),
+			updatedAt: new Date("2026-01-01"),
+		});
+
+		const response = await app.request("/public_user_id", {
+			method: "GET",
+		});
+		const json = (await response.json()) as {
+			user: { id: string; handle: string | null };
+		};
+
+		expect(response.status).toBe(200);
+		expect(json.user.id).toBe("public_user_id");
+		expect(json.user.handle).toBe("public_user");
+		expect(json.user).not.toHaveProperty("email");
+	});
+
+	it("未ログイン時に /me/developer は利用できない", async () => {
+		const response = await app.request("/me/developer", {
+			method: "POST",
+		});
+
+		expect(response.status).toBe(401);
+	});
+
+	it("ログイン時に /me/developer で開発者登録できる", async () => {
+		await createUser();
+
+		const response = await app.request("/me/developer", {
+			method: "POST",
+		});
+		const body = (await response.json()) as {
+			isDeveloper: boolean;
+		};
+
+		const [storedUser] = await db
+			.select({
+				isDeveloper: schema.user.isDeveloper,
+			})
+			.from(schema.user)
+			.where(eq(schema.user.id, "test_user_id"))
+			.limit(1);
+
+		expect(response.status).toBe(200);
+		expect(body.isDeveloper).toBe(true);
+		expect(storedUser?.isDeveloper).toBe(true);
 	});
 
 	it("フォローと解除ができる", async () => {

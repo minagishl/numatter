@@ -96,7 +96,6 @@ export type ProfileResponse = {
 		id: string;
 		name: string;
 		handle: string | null;
-		email: string;
 		image: string | null;
 		bio: string | null;
 		bannerImage: string | null;
@@ -340,6 +339,28 @@ export const updateMyProfile = async (
 	return body;
 };
 
+export const registerAsDeveloper = async (): Promise<{
+	isDeveloper: boolean;
+}> => {
+	const response = await fetch("/api/users/me/developer", {
+		method: "POST",
+		credentials: "include",
+		headers: JSON_HEADERS,
+	});
+	const body = (await response.json()) as {
+		isDeveloper?: boolean;
+		error?: string;
+	};
+
+	if (!response.ok) {
+		throw new Error(body.error ?? "Failed to register as developer");
+	}
+
+	return {
+		isDeveloper: Boolean(body.isDeveloper),
+	};
+};
+
 export const toggleFollow = async (
 	userId: string,
 	isFollowing: boolean,
@@ -383,6 +404,26 @@ export const refreshLinkPreview = async (
 	}
 
 	return body.updated ?? null;
+};
+
+export const previewLinkCard = async (url: string): Promise<LinkSummary> => {
+	const response = await fetch("/api/link-previews/preview", {
+		method: "POST",
+		credentials: "include",
+		headers: JSON_HEADERS,
+		body: JSON.stringify({ url }),
+	});
+
+	const body = (await response.json()) as {
+		link?: LinkSummary;
+		error?: string;
+	};
+
+	if (!response.ok || !body.link) {
+		throw new Error(body.error ?? "Failed to preview link card");
+	}
+
+	return body.link;
 };
 
 const postMultipart = async (path: string, formData: FormData) => {
