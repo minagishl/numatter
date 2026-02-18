@@ -614,29 +614,21 @@ describe("/routes/posts", () => {
 		]);
 	});
 
-	it("投稿にいいねしたユーザー一覧を返す", async () => {
-		await createUser();
+	it("投稿にいいねしたユーザー一覧を投稿者本人が取得できる", async () => {
+		const author = await createUser();
 
 		const targetPostId = "likers_post_id";
-		const firstUserId = "likers_first_user_id";
 		const secondUserId = "likers_second_user_id";
 
-		await db.insert(schema.user).values([
-			{
-				id: firstUserId,
-				name: "First Liker",
-				email: "first-liker@example.com",
-			},
-			{
-				id: secondUserId,
-				name: "Second Liker",
-				email: "second-liker@example.com",
-			},
-		]);
+		await db.insert(schema.user).values({
+			id: secondUserId,
+			name: "Second Liker",
+			email: "second-liker@example.com",
+		});
 
 		await db.insert(schema.posts).values({
 			id: targetPostId,
-			authorId: firstUserId,
+			authorId: author.id,
 			content: "liked post",
 		});
 
@@ -644,7 +636,7 @@ describe("/routes/posts", () => {
 			{
 				id: "likers_like_old",
 				postId: targetPostId,
-				userId: firstUserId,
+				userId: author.id,
 				createdAt: new Date("2026-01-01T00:00:00.000Z"),
 			},
 			{
@@ -665,7 +657,7 @@ describe("/routes/posts", () => {
 		expect(response.status).toBe(200);
 		expect(body.users.map((user) => user.id)).toEqual([
 			secondUserId,
-			firstUserId,
+			author.id,
 		]);
 	});
 
