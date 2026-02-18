@@ -1,5 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
-import { and, count, eq, ne } from "drizzle-orm";
+import { and, count, desc, eq, ne } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import { uuidv7 } from "uuidv7";
 import { z } from "zod";
@@ -22,6 +22,15 @@ const userIdParamSchema = z.object({
 
 const MAX_NAME_LENGTH = 50;
 const MAX_BIO_LENGTH = 160;
+
+type UserSummary = {
+	id: string;
+	name: string;
+	handle: string | null;
+	image: string | null;
+	bio: string | null;
+	bannerImage: string | null;
+};
 
 const app = createHonoApp()
 	.get("/me", async (c) => {
@@ -181,6 +190,74 @@ const app = createHonoApp()
 		);
 		return c.json(profile);
 	})
+	.get(
+		"/:userId/followers",
+		zValidator("param", userIdParamSchema),
+		async (c) => {
+			const { userId } = c.req.valid("param");
+			await assertUserExists(c.get("db"), userId);
+
+			const rows = await c
+				.get("db")
+				.select({
+					id: schema.user.id,
+					name: schema.user.name,
+					handle: schema.user.handle,
+					image: schema.user.image,
+					bio: schema.user.bio,
+					bannerImage: schema.user.bannerImage,
+				})
+				.from(schema.follows)
+				.innerJoin(schema.user, eq(schema.follows.followerId, schema.user.id))
+				.where(eq(schema.follows.followingId, userId))
+				.orderBy(desc(schema.follows.createdAt));
+
+			const users: UserSummary[] = rows.map((row) => ({
+				id: row.id,
+				name: row.name,
+				handle: row.handle,
+				image: row.image,
+				bio: row.bio,
+				bannerImage: row.bannerImage,
+			}));
+
+			return c.json({ users });
+		},
+	)
+	.get(
+		"/:userId/following",
+		zValidator("param", userIdParamSchema),
+		async (c) => {
+			const { userId } = c.req.valid("param");
+			await assertUserExists(c.get("db"), userId);
+
+			const rows = await c
+				.get("db")
+				.select({
+					id: schema.user.id,
+					name: schema.user.name,
+					handle: schema.user.handle,
+					image: schema.user.image,
+					bio: schema.user.bio,
+					bannerImage: schema.user.bannerImage,
+				})
+				.from(schema.follows)
+				.innerJoin(schema.user, eq(schema.follows.followingId, schema.user.id))
+				.where(eq(schema.follows.followerId, userId))
+				.orderBy(desc(schema.follows.createdAt));
+
+			const users: UserSummary[] = rows.map((row) => ({
+				id: row.id,
+				name: row.name,
+				handle: row.handle,
+				image: row.image,
+				bio: row.bio,
+				bannerImage: row.bannerImage,
+			}));
+
+			return c.json({ users });
+		},
+	)
 	.post(
 		"/:userId/follow",
 		zValidator("param", userIdParamSchema),

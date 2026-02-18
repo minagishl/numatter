@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { AppShell } from "@/components/app-shell";
@@ -198,18 +199,24 @@ export function UserProfilePage({ userId }: UserProfilePageProps) {
 					</div>
 
 					<div className="mt-3 flex flex-wrap gap-4 text-sm">
-						<span>
+						<Link
+							href={`/users/${profile.user.id}/following`}
+							className="rounded-md transition hover:bg-[var(--surface-muted)]"
+						>
 							<strong className="font-bold text-[var(--text-main)]">
 								{profile.stats.following}
 							</strong>{" "}
 							<span className="text-[var(--text-subtle)]">フォロー中</span>
-						</span>
-						<span>
+						</Link>
+						<Link
+							href={`/users/${profile.user.id}/followers`}
+							className="rounded-md transition hover:bg-[var(--surface-muted)]"
+						>
 							<strong className="font-bold text-[var(--text-main)]">
 								{profile.stats.followers}
 							</strong>{" "}
 							<span className="text-[var(--text-subtle)]">フォロワー</span>
-						</span>
+						</Link>
 						<span>
 							<strong className="font-bold text-[var(--text-main)]">
 								{profile.stats.posts}

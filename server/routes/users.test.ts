@@ -169,6 +169,142 @@ describe("/routes/users", () => {
 		expect(currentUser.id).toBe("test_user_id");
 	});
 
+	it("フォロワー一覧を取得できる", async () => {
+		await createUser();
+		await db.insert(schema.user).values([
+			{
+				id: "list_target_user_id",
+				name: "List Target",
+				handle: "list_target",
+				email: "list_target@example.com",
+				emailVerified: true,
+				createdAt: new Date("2026-01-01"),
+				updatedAt: new Date("2026-01-01"),
+			},
+			{
+				id: "follower_user_1",
+				name: "Follower 1",
+				handle: "follower_1",
+				email: "follower_1@example.com",
+				emailVerified: true,
+				createdAt: new Date("2026-01-01"),
+				updatedAt: new Date("2026-01-01"),
+			},
+			{
+				id: "follower_user_2",
+				name: "Follower 2",
+				handle: "follower_2",
+				email: "follower_2@example.com",
+				emailVerified: true,
+				createdAt: new Date("2026-01-01"),
+				updatedAt: new Date("2026-01-01"),
+			},
+		]);
+
+		await db.insert(schema.follows).values([
+			{
+				id: "follow_list_1",
+				followerId: "follower_user_1",
+				followingId: "list_target_user_id",
+				createdAt: new Date("2026-01-02T00:00:00.000Z"),
+			},
+			{
+				id: "follow_list_2",
+				followerId: "follower_user_2",
+				followingId: "list_target_user_id",
+				createdAt: new Date("2026-01-03T00:00:00.000Z"),
+			},
+		]);
+
+		const response = await app.request("/list_target_user_id/followers", {
+			method: "GET",
+		});
+		const body = (await response.json()) as {
+			users: Array<{ id: string; handle: string | null }>;
+		};
+
+		expect(response.status).toBe(200);
+		expect(body.users.map((user) => user.id)).toEqual([
+			"follower_user_2",
+			"follower_user_1",
+		]);
+		expect(body.users[0]?.handle).toBe("follower_2");
+	});
+
+	it("フォロー中一覧を取得できる", async () => {
+		await createUser();
+		await db.insert(schema.user).values([
+			{
+				id: "list_source_user_id",
+				name: "List Source",
+				handle: "list_source",
+				email: "list_source@example.com",
+				emailVerified: true,
+				createdAt: new Date("2026-01-01"),
+				updatedAt: new Date("2026-01-01"),
+			},
+			{
+				id: "following_user_1",
+				name: "Following 1",
+				handle: "following_1",
+				email: "following_1@example.com",
+				emailVerified: true,
+				createdAt: new Date("2026-01-01"),
+				updatedAt: new Date("2026-01-01"),
+			},
+			{
+				id: "following_user_2",
+				name: "Following 2",
+				handle: "following_2",
+				email: "following_2@example.com",
+				emailVerified: true,
+				createdAt: new Date("2026-01-01"),
+				updatedAt: new Date("2026-01-01"),
+			},
+		]);
+
+		await db.insert(schema.follows).values([
+			{
+				id: "follow_list_3",
+				followerId: "list_source_user_id",
+				followingId: "following_user_1",
+				createdAt: new Date("2026-01-02T00:00:00.000Z"),
+			},
+			{
+				id: "follow_list_4",
+				followerId: "list_source_user_id",
+				followingId: "following_user_2",
+				createdAt: new Date("2026-01-03T00:00:00.000Z"),
+			},
+		]);
+
+		const response = await app.request("/list_source_user_id/following", {
+			method: "GET",
+		});
+		const body = (await response.json()) as {
+			users: Array<{ id: string; handle: string | null }>;
+		};
+
+		expect(response.status).toBe(200);
+		expect(body.users.map((user) => user.id)).toEqual([
+			"following_user_2",
+			"following_user_1",
+		]);
+		expect(body.users[0]?.handle).toBe("following_2");
+	});
+
+	it("存在しないユーザーのフォロー一覧は 404 になる", async () => {
+		const followersResponse = await app.request("/missing_user/followers", {
+			method: "GET",
+		});
+		const followingResponse = await app.request("/missing_user/following", {
+			method: "GET",
+		});
+
+		expect(followersResponse.status).toBe(404);
+		expect(followingResponse.status).toBe(404);
+	});
+
 	it("プロフィールの名前と自己紹介を更新できる", async () => {
 		await createUser();
 		const formData = new FormData();
