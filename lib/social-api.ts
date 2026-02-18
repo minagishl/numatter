@@ -114,6 +114,10 @@ export type ProfileResponse = {
 	};
 };
 
+export type FollowListResponse = {
+	users: UserSummary[];
+};
+
 export type DeveloperApiTokenSummary = {
 	id: string;
 	name: string;
@@ -458,6 +462,42 @@ export const toggleFollow = async (
 		throw new Error(body.error ?? "Failed to update follow status");
 	}
 	return body;
+};
+
+export const fetchFollowers = async (
+	userId: string,
+): Promise<FollowListResponse> => {
+	const response = await fetch(`/api/users/${userId}/followers`, {
+		credentials: "include",
+		cache: "no-store",
+	});
+	const body = (await response.json()) as FollowListResponse & {
+		error?: string;
+	};
+	if (!response.ok) {
+		throw new Error(body.error ?? "Failed to fetch followers");
+	}
+	return {
+		users: body.users ?? [],
+	};
+};
+
+export const fetchFollowing = async (
+	userId: string,
+): Promise<FollowListResponse> => {
+	const response = await fetch(`/api/users/${userId}/following`, {
+		credentials: "include",
+		cache: "no-store",
+	});
+	const body = (await response.json()) as FollowListResponse & {
+		error?: string;
+	};
+	if (!response.ok) {
+		throw new Error(body.error ?? "Failed to fetch following");
+	}
+	return {
+		users: body.users ?? [],
+	};
 };
 
 export const refreshLinkPreview = async (
