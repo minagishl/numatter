@@ -614,6 +614,61 @@ describe("/routes/posts", () => {
 		]);
 	});
 
+	it("投稿にいいねしたユーザー一覧を返す", async () => {
+		await createUser();
+
+		const targetPostId = "likers_post_id";
+		const firstUserId = "likers_first_user_id";
+		const secondUserId = "likers_second_user_id";
+
+		await db.insert(schema.user).values([
+			{
+				id: firstUserId,
+				name: "First Liker",
+				email: "first-liker@example.com",
+			},
+			{
+				id: secondUserId,
+				name: "Second Liker",
+				email: "second-liker@example.com",
+			},
+		]);
+
+		await db.insert(schema.posts).values({
+			id: targetPostId,
+			authorId: firstUserId,
+			content: "liked post",
+		});
+
+		await db.insert(schema.postLikes).values([
+			{
+				id: "likers_like_old",
+				postId: targetPostId,
+				userId: firstUserId,
+				createdAt: new Date("2026-01-01T00:00:00.000Z"),
+			},
+			{
+				id: "likers_like_new",
+				postId: targetPostId,
+				userId: secondUserId,
+				createdAt: new Date("2026-01-02T00:00:00.000Z"),
+			},
+		]);
+
+		const response = await app.request(`/${targetPostId}/likes`, {
+			method: "GET",
+		});
+		const body = (await response.json()) as {
+			users: Array<{ id: string; name: string }>;
+		};
+
+		expect(response.status).toBe(200);
+		expect(body.users.map((user) => user.id)).toEqual([
+			secondUserId,
+			firstUserId,
+		]);
+	});
+
 	it("存在しない投稿の詳細取得は404", async () => {
 		await createUser();
 
