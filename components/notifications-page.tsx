@@ -13,7 +13,7 @@ import {
 import Link from "next/link";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 
-import { AppShell } from "@/components/app-shell";
+import { MainPageContent } from "@/components/main-page-content";
 import { authClient } from "@/lib/auth-client";
 import {
 	fetchNotifications,
@@ -96,17 +96,17 @@ export function NotificationsPage() {
 
 	if (isPending) {
 		return (
-			<AppShell pageTitle="通知">
+			<MainPageContent title="通知">
 				<section className="border-b border-[var(--border-subtle)] px-4 py-6 text-sm text-[var(--text-subtle)]">
 					通知を読み込んでいます...
 				</section>
-			</AppShell>
+			</MainPageContent>
 		);
 	}
 
 	if (!session?.user) {
 		return (
-			<AppShell pageTitle="通知">
+			<MainPageContent title="通知">
 				<section className="border-b border-[var(--border-subtle)] px-4 py-8">
 					<p className="text-lg font-extrabold text-[var(--text-main)]">
 						通知を見るにはログインが必要です
@@ -129,12 +129,12 @@ export function NotificationsPage() {
 						</Link>
 					</div>
 				</section>
-			</AppShell>
+			</MainPageContent>
 		);
 	}
 
 	return (
-		<AppShell pageTitle="通知">
+		<MainPageContent title="通知">
 			<section className="border-b border-[var(--border-subtle)]">
 				<div className="flex overflow-x-auto px-2 py-1">
 					{NOTIFICATION_FILTERS.map((filter) => {
@@ -203,7 +203,7 @@ export function NotificationsPage() {
 					))}
 				</ul>
 			)}
-		</AppShell>
+		</MainPageContent>
 	);
 }
 

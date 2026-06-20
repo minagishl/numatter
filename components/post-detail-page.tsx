@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { AppShell } from "@/components/app-shell";
+import { MainPageContent } from "@/components/main-page-content";
 import { authClient } from "@/lib/auth-client";
 import {
 	createQuote,
@@ -334,26 +334,26 @@ export function PostDetailPage({ postId }: PostDetailPageProps) {
 
 	if (isLoading) {
 		return (
-			<AppShell pageTitle="投稿">
+			<MainPageContent title="投稿">
 				<section className="border-b border-[var(--border-subtle)] px-4 py-6 text-sm text-[var(--text-subtle)]">
 					投稿を読み込んでいます...
 				</section>
-			</AppShell>
+			</MainPageContent>
 		);
 	}
 
 	if (loadError || !detail) {
 		return (
-			<AppShell pageTitle="投稿">
+			<MainPageContent title="投稿">
 				<section className="border-b border-rose-200 bg-rose-50 px-4 py-6 text-sm text-rose-700">
 					{loadError ?? "投稿が見つかりませんでした"}
 				</section>
-			</AppShell>
+			</MainPageContent>
 		);
 	}
 
 	return (
-		<AppShell pageTitle="投稿">
+		<MainPageContent title="投稿">
 			<section className="border-b border-[var(--border-subtle)] px-4 py-3">
 				<button
 					type="button"
@@ -520,7 +520,7 @@ export function PostDetailPage({ postId }: PostDetailPageProps) {
 					</div>
 				</Modal>
 			) : null}
-		</AppShell>
+		</MainPageContent>
 	);
 }
 

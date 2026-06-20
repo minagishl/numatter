@@ -22,8 +22,7 @@ import {
 } from "@/lib/social-api";
 import { createDisplayHandle } from "@/lib/user-handle";
 
-type AppShellProps = {
-	pageTitle: string;
+type AppShellLayoutProps = {
 	children: ReactNode;
 	rightColumn?: ReactNode;
 };
@@ -58,7 +57,7 @@ const KONAMI_CODE = [
 	"a",
 ] as const;
 
-export function AppShell({ pageTitle, children, rightColumn }: AppShellProps) {
+export function AppShellLayout({ children, rightColumn }: AppShellLayoutProps) {
 	const pathname = usePathname();
 	const { data: session, isPending } = authClient.useSession();
 	const [discoverData, setDiscoverData] =
@@ -288,7 +287,7 @@ export function AppShell({ pageTitle, children, rightColumn }: AppShellProps) {
 			</header>
 
 			<div className="mx-auto flex w-full max-w-[1265px] justify-center gap-6 px-0 md:px-4">
-				<aside className="hidden h-screen w-[260px] shrink-0 flex-col justify-between py-3 lg:sticky lg:top-0 lg:flex">
+				<aside className="hidden w-[260px] shrink-0 flex-col justify-between self-start py-3 lg:sticky lg:top-0 lg:flex lg:h-screen lg:max-h-screen">
 					<div className="space-y-2">
 						<Link
 							href="/"
@@ -311,8 +310,10 @@ export function AppShell({ pageTitle, children, rightColumn }: AppShellProps) {
 									<Link
 										key={item.href}
 										href={item.href}
-										className={`group flex w-fit items-center gap-4 rounded-full px-4 py-3 text-xl text-[var(--text-main)] transition hover:bg-[var(--surface-muted)] ${
-											isActive ? "font-extrabold" : "font-medium"
+										className={`group flex w-fit items-center gap-4 rounded-full px-4 py-3 text-xl font-extrabold transition hover:bg-[var(--surface-muted)] ${
+											isActive
+												? "text-[var(--text-main)]"
+												: "text-[var(--text-subtle)] hover:text-[var(--text-main)]"
 										}`}
 									>
 										<span className="relative inline-flex text-[var(--text-main)]">
@@ -389,15 +390,10 @@ export function AppShell({ pageTitle, children, rightColumn }: AppShellProps) {
 				</aside>
 
 				<section className="min-h-screen w-full max-w-[600px] border-x border-[var(--border-subtle)] bg-[var(--surface-main)] pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-6">
-					<div className="sticky top-0 z-30 hidden border-b border-[var(--border-subtle)] bg-white/95 px-4 py-3 backdrop-blur md:block">
-						<p className="text-xl font-extrabold text-[var(--text-main)]">
-							{pageTitle}
-						</p>
-					</div>
 					{children}
 				</section>
 
-				<aside className="hidden w-[350px] shrink-0 py-3 xl:block">
+				<aside className="hidden w-[350px] shrink-0 self-start py-3 xl:block">
 					{rightColumn ?? (
 						<DefaultRightColumn
 							trends={discoverData.trends}

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-import { AppShell } from "@/components/app-shell";
+import { MainPageContent } from "@/components/main-page-content";
 import {
 	type FollowListResponse,
 	fetchPostDetail,
@@ -75,7 +75,7 @@ export function PostLikeListPage({ postId }: PostLikeListPageProps) {
 	}, [postId]);
 
 	return (
-		<AppShell pageTitle={title}>
+		<MainPageContent title={title}>
 			<section className="border-b border-[var(--border-subtle)] px-4 py-4">
 				<Link
 					href={`/posts/${postId}`}
@@ -145,6 +145,6 @@ export function PostLikeListPage({ postId }: PostLikeListPageProps) {
 					})}
 				</ul>
 			)}
-		</AppShell>
+		</MainPageContent>
 	);
 }

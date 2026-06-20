@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { AppShell } from "@/components/app-shell";
+import { MainPageContent } from "@/components/main-page-content";
 import { authClient } from "@/lib/auth-client";
 import {
 	fetchUserProfile,
@@ -92,21 +92,21 @@ export function UserProfilePage({ userId }: UserProfilePageProps) {
 
 	if (isLoading) {
 		return (
-			<AppShell pageTitle="Profile">
+			<MainPageContent title="Profile">
 				<section className="border-b border-[var(--border-subtle)] px-4 py-6 text-sm text-[var(--text-subtle)]">
 					プロフィールを読み込んでいます...
 				</section>
-			</AppShell>
+			</MainPageContent>
 		);
 	}
 
 	if (error || !profile) {
 		return (
-			<AppShell pageTitle="Profile">
+			<MainPageContent title="Profile">
 				<section className="border-b border-rose-200 bg-rose-50 px-4 py-6 text-sm text-rose-700">
 					{error ?? "Profile not found"}
 				</section>
-			</AppShell>
+			</MainPageContent>
 		);
 	}
 
@@ -125,7 +125,7 @@ export function UserProfilePage({ userId }: UserProfilePageProps) {
 	);
 
 	return (
-		<AppShell pageTitle={profile.user.name}>
+		<MainPageContent title={profile.user.name}>
 			<section className="border-b border-[var(--border-subtle)]">
 				<div className="h-44 bg-[linear-gradient(135deg,#1d9bf0,#198ad0,#0f5f8a)]">
 					{profile.user.bannerImage ? (
@@ -279,6 +279,6 @@ export function UserProfilePage({ userId }: UserProfilePageProps) {
 				}
 				profileTab={activeTab}
 			/>
-		</AppShell>
+		</MainPageContent>
 	);
 }

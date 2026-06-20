@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Noto_Sans_JP } from "next/font/google";
 
-import { PageTransition } from "@/components/page-transition";
 import "./globals.css";
 
 const bodySans = Noto_Sans_JP({
@@ -37,9 +36,7 @@ export default function RootLayout({
 			<body
 				className={`${bodySans.variable} ${bodyMono.variable} min-h-screen bg-[var(--app-bg)] text-[var(--text-main)] antialiased`}
 			>
-				<main className="min-h-screen">
-					<PageTransition>{children}</PageTransition>
-				</main>
+				<main className="min-h-screen">{children}</main>
 			</body>
 		</html>
 	);

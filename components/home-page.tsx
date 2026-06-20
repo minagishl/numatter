@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { AppShell } from "@/components/app-shell";
+import { MainPageContent } from "@/components/main-page-content";
 import { authClient } from "@/lib/auth-client";
 import { createPost, type PostSummary } from "@/lib/social-api";
 import { PostComposer } from "./post-composer";
@@ -14,7 +14,7 @@ export function HomePage() {
 		useState<PostSummary | null>(null);
 
 	return (
-		<AppShell pageTitle="Home">
+		<MainPageContent title="Home">
 			{isPending ? (
 				<div className="border-b border-[var(--border-subtle)] px-4 py-4 text-sm text-[var(--text-subtle)]">
 					キミのためのタイムラインをつくっています...
@@ -54,6 +54,6 @@ export function HomePage() {
 				}
 				newPost={latestCreatedPost}
 			/>
-		</AppShell>
+		</MainPageContent>
 	);
 }

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 
-import { AppShell } from "@/components/app-shell";
+import { MainPageContent } from "@/components/main-page-content";
 import { authClient } from "@/lib/auth-client";
 import {
 	createQuote,
@@ -417,7 +417,7 @@ export function SearchPage({ initialQuery }: SearchPageProps) {
 	const normalizedQuery = activeQuery.trim();
 
 	return (
-		<AppShell pageTitle="検索">
+		<MainPageContent title="検索">
 			<section className="border-b border-[var(--border-subtle)] bg-[var(--surface-main)] px-4 py-3">
 				<form onSubmit={handleSubmit} className="relative">
 					<Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-subtle)]" />
@@ -684,7 +684,7 @@ export function SearchPage({ initialQuery }: SearchPageProps) {
 					</div>
 				</Modal>
 			) : null}
-		</AppShell>
+		</MainPageContent>
 	);
 }
 

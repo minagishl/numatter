@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-import { AppShell } from "@/components/app-shell";
+import { MainPageContent } from "@/components/main-page-content";
 import {
 	type FollowListResponse,
 	fetchFollowers,
@@ -77,7 +77,7 @@ export function UserFollowListPage({ userId, mode }: UserFollowListPageProps) {
 	}, [mode, userId]);
 
 	return (
-		<AppShell pageTitle={title}>
+		<MainPageContent title={title}>
 			<section className="border-b border-[var(--border-subtle)] px-4 py-4">
 				<Link
 					href={`/users/${userId}`}
@@ -147,6 +147,6 @@ export function UserFollowListPage({ userId, mode }: UserFollowListPageProps) {
 					})}
 				</ul>
 			)}
-		</AppShell>
+		</MainPageContent>
 	);
 }

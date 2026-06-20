@@ -21,6 +21,10 @@
 	--font-mono: var(--font-ui-mono);
 }
 
+html {
+	scrollbar-gutter: stable;
+}
+
 body {
 	background: var(--app-bg);
 	color: var(--text-main);
